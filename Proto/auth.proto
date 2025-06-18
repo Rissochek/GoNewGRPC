@@ -18,6 +18,12 @@ service Auth {
             body: "*"
         };
     };    
+    rpc Logout(Logout_msg) returns (Logout_reply){
+        option (google.api.http) = {
+            post: "/api/logout"
+            body: "*"
+        };
+    };
 }
 
 message Reg_msg {
@@ -30,6 +36,10 @@ message Login_msg {
     string password = 2;
 }
 
+message Logout_msg{
+    string token = 1;
+}
+
 message Reg_reply {
     string status = 1;
 }
@@ -37,4 +47,8 @@ message Reg_reply {
 message Login_reply {
     string status = 1;
     string token = 2;
+}
+
+message Logout_reply {
+    string status = 1;
 }

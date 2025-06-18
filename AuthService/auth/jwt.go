@@ -1,15 +1,16 @@
 package auth
 
 import (
-	"AuthProject/model"
+	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/joho/godotenv"
+
+	"AuthProject/model"
+	"AuthProject/utils"
 )
 
 type JWTCustomClaims struct {
@@ -21,6 +22,11 @@ type JWTCustomClaims struct {
 type JWTManager struct {
 	SecretKey     string
 	TokenDuration time.Duration
+}
+
+func NewJWTManager(token_duration time.Duration) *JWTManager {
+	secret := utils.GetSecretKeyFromEnv()
+	return &JWTManager{TokenDuration: token_duration, SecretKey: secret}
 }
 
 func (manager *JWTManager) GenerateJWT(user *model.User) (string, error) {
@@ -67,6 +73,15 @@ func (manager *JWTManager) VerifyJWT(user_token string) (*JWTCustomClaims, error
 	return claims, nil
 }
 
+func (manager *JWTManager) ValidateToken(ctx context.Context, token string) error {
+	_, err := manager.VerifyJWT(token)
+	log.Printf("invalid token: %v", err)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func ExtractToken(bearerToken string) (string, error) {
 	if !strings.HasPrefix(bearerToken, "Bearer ") {
 		return "", fmt.Errorf("invalid token format")
@@ -74,16 +89,4 @@ func ExtractToken(bearerToken string) (string, error) {
 
 	token := strings.TrimPrefix(bearerToken, "Bearer ")
 	return token, nil
-}
-
-func (manager *JWTManager) GetSecretKeyFromEnv() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("no .env file found") //if u have this error, but .env file is existing then try to execute with this command go run .\cmd\server\main.go
-	}
-
-	secret, exists := os.LookupEnv("SECRET_KEY")
-	if !exists {
-		log.Fatalf("secret key value is not set in .env file.")
-	}
-	manager.SecretKey = secret
 }
